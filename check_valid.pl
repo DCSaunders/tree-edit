@@ -4,24 +4,39 @@ use strict;
 # check that the parse is valid
 # (e.g. non-terminals follow on from each other in pre-order)
 
-my @special = qw( N -RRB -LRB -RCB -LCB US$ C$ A$ HK$ M$ S$ );
-my %lookup = map { $_ => undef } @special;
-
+my %nts;
 sub is_terminal {
-    if ((scalar @_ <= 1) and 
-	((lc $_[0] eq $_[0]) or (exists $lookup{$_[0]}))){
-	return 1;
+    if (scalar @_ == 2){
+	if (not exists $nts{$_[1]}){
+	    return 1;
+	}
+	elsif ($_[1] eq $_[0]){
+	    return 1;
+       }
     }
     return 0;
 }
 
-while (<ARGV>)
+my $ln = 0;
+my @lines = <ARGV>;
+for (@lines){
+    chomp;
+    my @rules = split(/ \/\/ /);
+    foreach my $rule(@rules){
+	my @rule = split(/ ==> /, $rule);
+	$nts{$rule[0]} = 1;
+    }
+}
+
+for (@lines)
 {
     chomp;
     my @rules = split(/ \/\/ /);
     my @stack;
     my $valid = 1;
     my $first = 1;
+    my @out = ();
+
     foreach my $rule (@rules){
 	my @rule = split(/ ==> /, $rule);
 	if (($first and ($rule[0] eq 'ROOT')) or
@@ -29,10 +44,11 @@ while (<ARGV>)
 	    if (not $first){
 		pop @stack;
 	    }
+	    push (@out, $rule);
 	    # okay if LHS is ROOT 
 	    # or equal to what you get from popping the stack
 	    my @rhs = split(/ /, $rule[1]);
-	    if (not is_terminal(@rhs)) {
+	    if (not is_terminal(@rule[0], @rhs)) {
 		# push rhs onto stack if contains non-terminals
 		push (@stack, reverse @rhs);
 	    }
@@ -45,11 +61,12 @@ while (<ARGV>)
 	    last;
 	}
 	else{
-	    my $out = join(' // ', @rules);
-	    print "$rule[0] $stack[-1]\n";
+	    push (@out, ($rule, '<- ERROR'));
+	    my $out = join(' // ', @out);
+	    print "INVALID line $ln: Rule LHS is $rule[0], top of stack is $stack[-1]\n";
 	    print "$out\n";
-	    print "INVALID\n";
 	    last;
 	}
     }
+    $ln = $ln + 1;
 }
