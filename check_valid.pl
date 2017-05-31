@@ -5,12 +5,15 @@ use strict;
 # (e.g. non-terminals follow on from each other in pre-order)
 
 my %nts;
+my @special = qw( N -RRB -LRB -RCB -LCB);
+my %lookup = map { $_ => undef } @special;
+
 sub is_terminal {
     if (scalar @_ == 2){
 	if (not exists $nts{$_[1]}){
 	    return 1;
 	}
-	elsif ($_[1] eq $_[0]){
+	elsif (((lc $_[1] eq $_[1]) or (exists $lookup{$_[1]})) and ($_[1] eq $_[0])){
 	    return 1;
        }
     }
