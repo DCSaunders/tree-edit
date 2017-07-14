@@ -5,7 +5,7 @@ use strict;
 # (e.g. non-terminals follow on from each other in pre-order)
 
 my %nts;
-my @special = qw( N -RRB -LRB -RCB -LCB);
+my @special = qw( N -RRB -LRB -RCB -LCB -LRB- -RRB- -LCB- -LCB-);
 my %lookup = map { $_ => undef } @special;
 
 sub is_terminal {
@@ -66,8 +66,7 @@ for (@lines)
 	else{
 	    push (@out, ($rule, '<- ERROR'));
 	    my $out = join(' // ', @out);
-	    print "INVALID line $ln: Rule LHS is $rule[0], top of stack is $stack[-1]\n";
-	    print "$out\n";
+	    print "INVALID line $ln: Rule LHS is $rule[0], top of stack is $stack[-1], $out\n";
 	    last;
 	}
     }

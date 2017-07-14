@@ -8,7 +8,7 @@ sub trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
 for (<ARGV>)
 {
     chomp;
-    my @rules = split(/ \/\/ /);
+    my @rules = split(/\/\//);
     my @out;
     my @stack = ();
     my $last_rhs = '';
@@ -28,10 +28,12 @@ for (<ARGV>)
 	my @rhs = split(/ /, $split_rule[1]);
         while (not ($lhs eq $last_rhs or $last_rhs eq '') and scalar @stack > 0){
 	    my $from_stack = pop @stack;
-	    push(@out, $from_stack);
 	    my @split_from_stack = split(/ ==> /, $from_stack);
 	    my @split_rhs = split(/ /, $split_from_stack[1]);
 	    $last_rhs = $split_rhs[0];
+	    if ($last_rhs ne ''){
+		push(@out, $from_stack);
+	    }
 	}
 
 	if (scalar @rhs eq 1){
@@ -42,15 +44,25 @@ for (<ARGV>)
 	else{
 	    my $multi_rhs = "$lhs " x (scalar @rhs - 1);
 	    my $multi_rule = "$lhs ==> $multi_rhs$lhs";
-	    push(@out, $multi_rule);
+	    if ($lhs ne ''){
+		push(@out, $multi_rule);
+	    }
 	    my @to_push = reverse @rhs;
 	    $last_rhs = pop(@to_push);
-	    push(@out, "$lhs ==> $last_rhs");
+	    if ($lhs ne $last_rhs and $last_rhs ne ''){
+		push(@out, "$lhs ==> $last_rhs");
+	    }
 	    foreach my $single_rhs (@to_push){
-		push(@stack, "$lhs ==> $single_rhs");
+		if ($lhs ne $single_rhs and $last_rhs ne ''){
+		    push(@stack, "$lhs ==> $single_rhs");
+		}
+		else{
+		    push(@stack, '');
+		}
 	    }
 	}
     }
-	my $out_line = join(" // ", @out);
+    my $out_line = join(" // ", @out);
+    
     print "$out_line\n";
 }
