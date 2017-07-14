@@ -2,6 +2,7 @@
 use strict;
 
 package Node;
+use Scalar::Util qw(weaken);
 
 my $delim = ' // ';
  
@@ -11,6 +12,7 @@ sub new {
     $self->{parent} = undef unless $self->{parent};
     $self->{children} = [];
     bless($self, $class);
+    weaken $self->{parent};
     return $self;
 }
 
@@ -19,7 +21,6 @@ sub add {
     push $self->{children}, Node->new(label=>$child_label, parent=>$self);
     return $self->{children}[-1];
 }
-
 
 
 sub disp{
@@ -47,12 +48,13 @@ sub make_node{
     }
     return $current_node;
 }
-
+my $current_node;
+my $root;
+my $count = 0;
+my $last_time = time;
 while(<ARGV>)
 {
     chomp;
-    my $current_node;
-    my $root;
     my @toks = split(/ /);
     for (my $i = 0; $i <= $#toks; $i++){
 	if ($toks[$i] eq '('){
@@ -73,4 +75,10 @@ while(<ARGV>)
     }
     $root->disp();
     print "\n";
+    $count += 1;
+    if (($count % 10000) == 0){
+	my $diff = time - $last_time;
+	print STDERR "line $count, approx. 10k time $diff\n";
+	$last_time = time;
+    }
 }
